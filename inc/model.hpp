@@ -44,8 +44,21 @@ public:
         for (size_t i = 0; i < scene->mNumMaterials; i++)
         {
             m_materials.push_back(
-                Material{scene->mMaterials[i]}
+                Material{scene->mMaterials[i], path.parent_path()}
             );
+        }
+    }
+
+    void
+    draw() const
+    {
+        for (const auto& mesh : m_meshes)
+        {
+            const auto& material = m_materials[mesh.get_mat_index()];
+        
+            material.bind();
+
+            mesh.draw();
         }
     }
 

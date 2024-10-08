@@ -3,8 +3,12 @@
 #include <assimp/material.h>
 #include <assimp/texture.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+
 #include <glad/gl.h>
 
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <array>
@@ -55,11 +59,63 @@ to_string(const aiTextureType type)
 
 struct Texture
 {
-    Texture(const aiTexture* texture)
+    Texture(const std::filesystem::path& tex_path)
     {
-        
+        stbi_set_flip_vertically_on_load(true);
+        unsigned char* data = 
+            stbi_load(tex_path.c_str(), &width, &height, &nrChannels, 0);
+
+        if (data == nullptr)
+        {
+            std::cerr << "Failed to load texture: " << tex_path << std::endl;
+            return;
+        }
+
+        if (nrChannels != 3 && nrChannels != 4)
+        {
+            std::cerr << "Number of color channels should be either 3 or 4" << std::endl;
+            stbi_image_free(data);
+            return;
+        }
+
+        glGenTextures(1, &id);
+
+        if (id == 0)
+        {
+            std::cerr << "Failed to generate texture" << std::endl;
+            stbi_image_free(data);
+            return;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, id);
+
+        int format = nrChannels == 4? GL_RGBA: GL_RGB;
+
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data
+        );
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        stbi_image_free(data);
+    }
+
+    void
+    bind(unsigned int slot) const
+    {
+        glActiveTexture(GL_TEXTURE0 + slot);
+        glBindTexture(GL_TEXTURE_2D, id);
+    }
+
+    void
+    unbind(unsigned int slot) const
+    {
+        glActiveTexture(GL_TEXTURE0 + slot);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     unsigned int id;
 
+    int width;
+    int height;
+    int nrChannels;
 }; // class Texture

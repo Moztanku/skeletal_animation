@@ -44,6 +44,7 @@ public:
         m_vao = create_vao(m_vbo, m_ibo);
 
         m_num_faces = faces.size();
+        m_mat_index = mesh->mMaterialIndex;
     }
 
     ~Mesh()
@@ -71,12 +72,19 @@ public:
         glBindVertexArray(0);
     }
 
+    unsigned int
+    get_mat_index() const
+    {
+        return m_mat_index;
+    }
+
 private:
     unsigned int m_vao;
     unsigned int m_vbo;
     unsigned int m_ibo;
 
     size_t m_num_faces;
+    size_t m_mat_index;
 
     std::vector<Vertex>
     parse_vertices(const aiMesh* mesh)
